@@ -7,22 +7,30 @@ export async function checkAndAddAssociation(email: string, name: string) {
   if (!email) return;
   try {
     const existingAssociation = await prisma.association.findUnique({
-      where: { email },
+      where: {
+        email,
+      },
     });
     if (!existingAssociation && name) {
       await prisma.association.create({
-        data: { email, name },
+        data: {
+          email,
+          name,
+        },
       });
     }
   } catch (error) {
     console.error(error);
   }
 }
+
 export async function getAssociation(email: string) {
   if (!email) return;
   try {
     const existingAssociation = await prisma.association.findUnique({
-      where: { email },
+      where: {
+        email,
+      },
     });
     return existingAssociation;
   } catch (error) {
@@ -39,7 +47,7 @@ export async function createCategory(
   try {
     const association = await getAssociation(email);
     if (!association) {
-      throw new Error("Aucune assiciation trouvée");
+      throw new Error("Aucune association trouvée avec cet email.");
     }
     await prisma.category.create({
       data: {
@@ -55,25 +63,29 @@ export async function createCategory(
 
 export async function updateCategory(
   id: string,
-  name: string,
   email: string,
+  name: string,
   description?: string
 ) {
-  if (!id || !name) {
-    throw new Error("ID et nom requis pour la mise à jour de la catégorie");
+  if (!id || !email || !name) {
+    throw new Error(
+      "L'id, l'email de l'association et le nom de la catégorie sont requis pour la mise à jour."
+    );
   }
+
   try {
     const association = await getAssociation(email);
     if (!association) {
-      throw new Error("Aucune assiciation trouvée");
+      throw new Error("Aucune association trouvée avec cet email.");
     }
+
     await prisma.category.update({
       where: {
         id: id,
         associationId: association.id,
       },
       data: {
-        name: name,
+        name,
         description: description || "",
       },
     });
@@ -81,15 +93,18 @@ export async function updateCategory(
     console.error(error);
   }
 }
+
 export async function deleteCategory(id: string, email: string) {
   if (!id || !email) {
-    throw new Error("ID et email requis pour la suppression de la catégorie");
+    throw new Error("L'id, l'email de l'association et sont requis.");
   }
+
   try {
     const association = await getAssociation(email);
     if (!association) {
-      throw new Error("Aucune assiciation trouvée");
+      throw new Error("Aucune association trouvée avec cet email.");
     }
+
     await prisma.category.delete({
       where: {
         id: id,
@@ -101,17 +116,19 @@ export async function deleteCategory(id: string, email: string) {
   }
 }
 
-export async function readCategory(
+export async function readCategories(
   email: string
 ): Promise<Category[] | undefined> {
   if (!email) {
-    throw new Error("Email requis pour la lecture de la catégorie");
+    throw new Error("l'email de l'association est  requis");
   }
+
   try {
     const association = await getAssociation(email);
     if (!association) {
-      throw new Error("Aucune assiciation trouvée");
+      throw new Error("Aucune association trouvée avec cet email.");
     }
+
     const categories = await prisma.category.findMany({
       where: {
         associationId: association.id,

@@ -3,10 +3,16 @@ import React, { useEffect, useState } from "react";
 import Wrapper from "../components/Wrapper";
 import CategoryModal from "../components/CategoryModal";
 import { useUser } from "@clerk/nextjs";
-import { createCategory, readCategory, updateCategory } from "../action";
+import {
+  createCategory,
+  deleteCategory,
+  readCategories,
+  updateCategory,
+} from "@/app/action";
 import { toast } from "react-toastify";
 import { Category } from "@prisma/client";
 import EmptyState from "../components/EmptyState";
+import { Pencil, Trash } from "lucide-react";
 
 const page = () => {
   const { user } = useUser();
@@ -20,15 +26,13 @@ const page = () => {
     null
   );
   const [categories, setCategories] = useState<Category[]>([]);
+
   const loadCategories = async () => {
     if (email) {
-      const data = await readCategory(email);
-      if (data) {
-        setCategories(data);
-      }
+      const data = await readCategories(email);
+      if (data) setCategories(data);
     }
   };
-
   useEffect(() => {
     loadCategories();
   }, [email]);
@@ -54,22 +58,44 @@ const page = () => {
     if (email) {
       await createCategory(name, email, description);
     }
+    await loadCategories();
     closeModal();
     setLoading(false);
-    toast.success("Catégorie créée avec succès !");
+    toast.success("Catégorie créée avec succès.");
   };
 
-  // Placeholder for update functionality
   const handleUpdateCategory = async () => {
     if (!editingCategoryId) return;
     setLoading(true);
     if (email) {
       await updateCategory(editingCategoryId, email, name, description);
     }
+    await loadCategories();
     closeModal();
     setLoading(false);
-    toast.success("Catégorie mise à jour avec succès !");
+    toast.success("Catégorie mise à jour avec succès.");
   };
+
+  const openEditModal = (category: Category) => {
+    setName(category.name);
+    setDescription(category.description || " ");
+    setEditMode(true);
+    setEditingCategoryId(category.id);
+    (
+      document.getElementById("category_modal") as HTMLDialogElement
+    )?.showModal();
+  };
+
+  const handleDeleteCategory = async (categoryId: string) => {
+    const confirmDelete = confirm(
+      "Voulez-vous vraiment supprimer cette catégorie ? Tous les produits associés seront également supprimés"
+    );
+    if (!confirmDelete) return;
+    await deleteCategory(categoryId, email);
+    await loadCategories();
+    toast.success("Catégorie supprimée avec succès.");
+  };
+
   return (
     <Wrapper>
       <div>
@@ -78,30 +104,52 @@ const page = () => {
             Ajouter une catégorie
           </button>
         </div>
+
+        {categories.length > 0 ? (
+          <div>
+            {categories.map((category) => (
+              <div
+                key={category.id}
+                className="mb-2 p-5 border-2 border-base-200 rounded-3xl flex justify-between items-center"
+              >
+                <div>
+                  <strong className="text-lg">{category.name}</strong>
+                  <div className="text-sm">{category.description}</div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    className="btn btn-sm"
+                    onClick={() => openEditModal(category)}
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                  <button
+                    className="btn btn-sm btn-error"
+                    onClick={() => handleDeleteCategory(category.id)}
+                  >
+                    <Trash className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            message={"Aucune catégorie disponible"}
+            IconComponent="Group"
+          />
+        )}
       </div>
-      {categories.length > 0 ? (
-        <div>d</div>
-      ) : (
-        <EmptyState
-          IconComponent="Group"
-          message={"Aucune catégorie trouvée"}
-        />
-      )}
 
       <CategoryModal
         name={name}
         description={description}
         loading={loading}
-        onclose={() => {
-          const modal = document.getElementById(
-            "category_modal"
-          ) as HTMLDialogElement;
-          modal?.close();
-        }}
-        editMode={editMode}
-        onChangeDescription={setDescription}
+        onclose={closeModal}
         onChangeName={setName}
+        onChangeDescription={setDescription}
         onSubmit={editMode ? handleUpdateCategory : handleCreateCategory}
+        editMode={editMode}
       />
     </Wrapper>
   );
