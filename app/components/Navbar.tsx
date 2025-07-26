@@ -1,4 +1,4 @@
-import { ListTree, Menu, PackagePlus, X } from "lucide-react";
+import { ListTree, Menu, PackagePlus, ShoppingBasket, X } from "lucide-react";
 import Link from "next/link";
 import React, { use, useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
@@ -6,16 +6,22 @@ import { UserButton, useUser } from "@clerk/nextjs";
 import { checkAndAddAssociation } from "../action";
 
 const Navbar = () => {
-  const {user }=  useUser();
+  const { user } = useUser();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
-  const navLinks = [{ href: "/category", label: "Categories", icon: ListTree }];
+  const navLinks = [
+    { href: "/new-product", label: "Nouveau Produit", icon: ShoppingBasket },
+    { href: "/category", label: "Categories", icon: ListTree },
+  ];
 
-  useEffect(()=>{
-    if(user?.primaryEmailAddress?.emailAddress && user.fullName){
-        checkAndAddAssociation(user?.primaryEmailAddress?.emailAddress, user.fullName)
+  useEffect(() => {
+    if (user?.primaryEmailAddress?.emailAddress && user.fullName) {
+      checkAndAddAssociation(
+        user?.primaryEmailAddress?.emailAddress,
+        user.fullName
+      );
     }
-  },[user])
+  }, [user]);
 
   const renderLinks = (baseClass: string) => (
     <>
