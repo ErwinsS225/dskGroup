@@ -226,15 +226,12 @@ export async function deleteProduct(id: string, email: string) {
   }
 }
 
-export async function readProduct(
-  id: string,
+export async function readProducts(
   email: string
 ): Promise<Product[] | undefined> {
   try {
     if (!email) {
-      throw new Error(
-        "l'email de l'association est requis pour la lecture d'un produit."
-      );
+      throw new Error("l'email est requis .");
     }
 
     const association = await getAssociation(email);
@@ -244,13 +241,13 @@ export async function readProduct(
 
     const products = await prisma.product.findMany({
       where: {
-        id: id,
         associationId: association.id,
       },
       include: {
         category: true,
       },
     });
+
     return products.map((product) => ({
       ...product,
       categoryName: product.category?.name,

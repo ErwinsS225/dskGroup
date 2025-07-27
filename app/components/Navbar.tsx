@@ -10,7 +10,8 @@ const Navbar = () => {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const navLinks = [
-    { href: "/new-product", label: "Nouveau Produit", icon: ShoppingBasket },
+    { href: "/products", label: "Produits", icon: ShoppingBasket },
+    { href: "/new-product", label: "Nouveau Produit", icon: PackagePlus },
     { href: "/category", label: "Categories", icon: ListTree },
   ];
 
